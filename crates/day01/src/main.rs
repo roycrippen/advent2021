@@ -4,11 +4,11 @@ fn main() {
         .map(|x| x.parse().unwrap())
         .collect();
 
-    println!("[imperative ] Day01 part a = {}", part_a_imperative(&xs));
-    println!("[functional ] Day01 part a = {}", part_a_functional(&xs));
+    println!("[imperative] Day01 part a = {}", part_a_imperative(&xs));
+    println!("[imperative] Day01 part b = {}", part_b_imperative(&xs));
     println!();
-    println!("[imperative ] Day01 part b = {}", part_b_imperative(&xs));
-    println!("[functional ] Day01 part b = {}", part_b_functional(&xs));
+    println!("[functional] Day01 part a = {}", part_a_functional(&xs));
+    println!("[functional] Day01 part b = {}", part_b_functional(&xs));
 }
 
 // imperative
