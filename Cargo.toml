@@ -1,0 +1,13 @@
+[package]
+name = "advent2021"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = ["crates/*"]
+
+
+[[bin]]
+name = "day01"
+path =  "crates/day01/src/main.rs"
+
