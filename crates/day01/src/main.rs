@@ -28,7 +28,7 @@ fn part_b_imperative(xs: &[usize]) -> usize {
     for i in 0..(xs.len() - 2) {
         ys.push(xs[i] + xs[i + 1] + xs[i + 2]);
     }
-    return part_a_imperative(&ys);
+    part_a_imperative(&ys)
 }
 
 // functional
