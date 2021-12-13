@@ -51,13 +51,14 @@ fn filter(xs: &Vec<u16>, k: usize, use_dominate: bool) -> Option<u16> {
     } else if len == 1 {
         Some(*xs.get(0).unwrap())
     } else {
-        filter(&filter_by_kth_bit(xs, k - 1, use_dominate), k - 1, use_dominate)
+        let ys = filter_by_kth_bit(xs, k - 1, use_dominate);
+        filter(&ys, k - 1, use_dominate)
     }
 }
 
 fn filter_by_kth_bit(xs: &Vec<u16>, k: usize, use_dominate: bool) -> Vec<u16> {
     let len = xs.len();
-    let ys = xs.iter()
+    xs.iter()
         .filter(|x| {
             let ones = ones_bit_count(xs, k);
             let dominate_bit = dominate_bit(ones, len - ones);
@@ -69,8 +70,7 @@ fn filter_by_kth_bit(xs: &Vec<u16>, k: usize, use_dominate: bool) -> Vec<u16> {
             }
         })
         .map(|x| *x)
-        .collect();
-    ys
+        .collect()
 }
 
 #[cfg(test)]
