@@ -4,7 +4,7 @@ use std::convert::TryInto;
 fn main() {
     let (moves, mut board) = read_input(InputType::Input);
     println!("Day04 part a = {}", part_a(&moves, &mut board)); // 21607
-    println!("Day04 part b = {}", part_b());
+    println!("Day04 part b = {}", part_b(&moves, &mut board)); // 19012
 }
 
 const BOARD_SIZE: usize = 5;
@@ -12,21 +12,33 @@ const BOARD_SIZE: usize = 5;
 fn part_a(draws: &Vec<u16>, boards: &mut Vec<Board>) -> usize {
     for draw in draws {
         apply_draw(boards, *draw);
-        for board in boards.iter() {
-            if board.is_winner() {
-                return board.score(*draw);
-            }
+        if let Some(_winner_count) = set_winners(boards) {
+            return  boards.iter().find(|b| b.winner).unwrap().score(*draw);
         }
     }
     0
 }
 
-fn part_b() -> usize {
+fn part_b(draws: &Vec<u16>, boards: &mut Vec<Board>) -> usize {
+    for draw in draws {
+        apply_draw(boards, *draw);
+        if let Some(winner_count) = set_winners(boards) {
+            if boards.len() > 0 && boards.len() == winner_count {
+                return boards.get(boards.len() - 1).unwrap().score(*draw);
+            }
+        }
+
+        // remove winners
+        boards.retain(|b| !b.winner);
+    }
+
+    // no loser board
     0
 }
 
 struct Board {
     elements: [[(u16, bool); BOARD_SIZE]; BOARD_SIZE],
+    winner: bool,
 }
 
 impl Board {
@@ -39,10 +51,10 @@ impl Board {
                 idx += 1;
             }
         }
-        Board { elements }
+        Board { elements, winner: false }
     }
 
-    fn is_winner(&self) -> bool {
+    fn set_winner(&mut self) -> bool {
         // row winner
         for i in 0..BOARD_SIZE {
             if self.elements[i].iter().all(|(_v, b)| *b) {
@@ -59,6 +71,7 @@ impl Board {
                 }
             }
             if count == BOARD_SIZE {
+                self.winner = true;
                 return true;
             }
         }
@@ -90,19 +103,19 @@ fn read_input(input_type: InputType) -> (Vec<u16>, Vec<Board>) {
     let moves = data
         .lines()
         .take(1)
-        .flat_map((|xs| xs
+        .flat_map(|xs| xs
             .split(",")
-            .map(|x| x.parse().unwrap())))
+            .map(|x| x.parse().unwrap()))
         .collect();
 
     let bs: Vec<u16> = data
         .lines()
         .skip(2)
         .filter(|s| s.len() > 0)
-        .flat_map((|xs| xs
+        .flat_map(|xs| xs
             .split(" ")
             .filter(|s| s.len() > 0)
-            .map(|x| x.parse().unwrap())))
+            .map(|x| x.parse().unwrap()))
         .collect();
 
     let boards: Vec<Board> = bs[..]
@@ -125,9 +138,17 @@ fn apply_draw(boards: &mut Vec<Board>, draw: u16) {
     }
 }
 
+fn set_winners(boards: &mut Vec<Board>) -> Option<usize> {
+    for board in boards.into_iter() {
+        board.winner = board.set_winner()
+    }
+    let winner_count = boards.iter().fold(0, |acc, b| if b.winner { acc + 1 } else { acc });
+    if winner_count > 0 { Some(winner_count) } else { None }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{read_input, part_a};
+    use crate::{read_input, part_a, part_b};
     use utils::InputType;
 
     #[test]
@@ -138,6 +159,7 @@ mod tests {
 
     #[test]
     fn test_part_b() {
-        assert_eq!(true, true);
+        let (moves, mut board) = read_input(InputType::Sample);
+        assert_eq!(1924, part_b(&moves, &mut board));
     }
 }
