@@ -7,6 +7,7 @@ pub fn ones_bit_count(xs: &Vec<u16>, k: usize) -> usize {
     xs.iter().fold(0 as usize, |acc, x| acc + ((*x as usize & (1 << k)) >> k))
 }
 
+#[derive(Debug)]
 pub enum InputType { Sample, Input }
 
 #[cfg(test)]

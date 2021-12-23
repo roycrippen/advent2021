@@ -6,6 +6,8 @@ edition = "2021"
 [workspace]
 members = ["crates/*"]
 
+[dependencies]
+utils = { path = "crates/utils" }
 
 [[bin]]
 name = "day01"
@@ -26,4 +28,8 @@ path =  "crates/day04/src/main.rs"
 [[bin]]
 name = "day05"
 path =  "crates/day05/src/main.rs"
+
+[[bin]]
+name = "day06"
+path =  "crates/day06/src/main.rs"
 
