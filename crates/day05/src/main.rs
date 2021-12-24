@@ -69,7 +69,7 @@ fn process_horizontal_and_vertical(vents: &Vec<Vent>) -> HashMap<(u32, u32), u32
     vents.iter()
         .filter(|vent| vent.line != Line::Diagonal)
         .for_each(|vent| {
-            for i in vent.start..vent.end + 1 {
+            for i in vent.start..=vent.end {
                 // let key = if vent.line == Line::Horizontal { format!("{}:{}", i, vent.from.1) } else { format!("{}:{}", vent.from.0, i) };
                 let key = if vent.line == Line::Horizontal { (i as u32, vent.from.1) } else { (vent.from.0, i as u32) };
                 update_map(key, &mut vent_m);
@@ -131,8 +131,8 @@ fn read_input(input_type: InputType) -> Vec<Vent> {
 
 fn dump(label: &str, vent_m: &HashMap<(u32, u32), u32>) {
     println!("{}", label);
-    for y in 0..10 {
-        for x in 0..10 {
+    for y in 0..=9 {
+        for x in 0..=9 {
             let key = (x, y);
             if let Some(v) = vent_m.get(&key) {
                 print!("{}", v)
