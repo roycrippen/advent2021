@@ -7,12 +7,22 @@ pub fn ones_bit_count(xs: &Vec<u16>, k: usize) -> usize {
     xs.iter().fold(0 as usize, |acc, x| acc + ((*x as usize & (1 << k)) >> k))
 }
 
+pub fn from_digits(xs: &Vec<u16>) -> usize {
+    let mut num: usize = 0;
+    let mut fac = 10_usize.pow((xs.len() - 1) as u32);
+    for i in 0..xs.len() {
+        num += fac * *xs.get(i).unwrap() as usize;
+        fac /= 10;
+    }
+    num
+}
+
 #[derive(Debug)]
 pub enum InputType { Sample, Input }
 
 #[cfg(test)]
 mod tests {
-    use crate::{flatten_zip3, ones_bit_count};
+    use crate::{flatten_zip3, ones_bit_count, from_digits};
 
     #[test]
     fn test_flatten_zip3() {
@@ -27,4 +37,10 @@ mod tests {
         assert_eq!(2, ones_bit_count(&xs, 1));
         assert_eq!(1, ones_bit_count(&xs, 2));
     }
+
+     #[test]
+    fn test_from_digits() {
+         let aaa = from_digits(&vec![5,3,5,3]);
+         assert_eq!(5353, aaa);
+     }
 }
