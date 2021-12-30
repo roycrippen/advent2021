@@ -18,8 +18,8 @@ static SEVEN_ARRAY: &[(&str, u16)] = &[
 
 fn main() {
     let xs = read_input(InputType::Input);
-    println!("Day06 part a = {}", part_a(&xs)); // 514
-    println!("Day06 part b = {}", part_b(&xs)); // 1012272
+    println!("Day08 part a = {}", part_a(&xs)); // 514
+    println!("Day08 part b = {}", part_b(&xs)); // 1012272
 }
 
 fn part_a(xs: &Vec<Segment>) -> usize {

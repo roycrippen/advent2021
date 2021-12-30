@@ -3,8 +3,8 @@ use std::collections::HashMap;
 
 fn main() {
     let xs = read_input(InputType::Input);
-    println!("Day06 part a = {}", part_a(&xs)); // 348664
-    println!("Day06 part b = {}", part_b(&xs));
+    println!("Day07 part a = {}", part_a(&xs)); // 348664
+    println!("Day07 part b = {}", part_b(&xs));
 }
 
 fn part_a(xs: &Vec<usize>) -> usize {
