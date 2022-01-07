@@ -17,12 +17,37 @@ pub fn from_digits(xs: &Vec<u16>) -> usize {
     num
 }
 
+pub fn get_neighbors(row: usize, col: usize, rows: usize, cols: usize) -> Option<Vec<(usize, usize)>> {
+    if rows < 3 || cols < 3 || row > rows - 1 || col > cols - 1 {
+        return None;
+    }
+
+    let r_lower = if row == 0 { row } else { row - 1 };
+    let r_upper = if row == rows - 1 { row } else { row + 1 };
+
+    let c_lower = if col == 0 { col } else { col - 1 };
+    let c_upper = if col == cols - 1 { col } else { col + 1 };
+
+    let mut xs = Vec::new();
+    for r in r_lower..=r_upper {
+        for c in c_lower..=c_upper {
+            if r == row && c == col {
+                continue;
+            }
+            xs.push((r, c));
+        }
+    }
+
+    Some(xs)
+}
+
+
 #[derive(Debug)]
 pub enum InputType { Sample, Input }
 
 #[cfg(test)]
 mod tests {
-    use crate::{flatten_zip3, ones_bit_count, from_digits};
+    use crate::{flatten_zip3, ones_bit_count, from_digits, get_neighbors};
 
     #[test]
     fn test_flatten_zip3() {
@@ -38,9 +63,24 @@ mod tests {
         assert_eq!(1, ones_bit_count(&xs, 2));
     }
 
-     #[test]
+    #[test]
     fn test_from_digits() {
-         let aaa = from_digits(&vec![5,3,5,3]);
-         assert_eq!(5353, aaa);
-     }
+        let aaa = from_digits(&vec![5, 3, 5, 3]);
+        assert_eq!(5353, aaa);
+    }
+
+    #[test]
+    fn test_get_neighbors() {
+        for r in 0..5 {
+            for c in 0..5 {
+                let xs = get_neighbors(r, c, 5, 5);
+                match (r, c) {
+                    (0, 0) | (0, 4) | (4, 0) | (4, 4) => assert_eq!(3, xs.len()),
+                    (0, _) | (4, _) | (_, 0) | (_, 4) => assert_eq!(5, xs.len()),
+                    _ => assert_eq!(8, xs.len()),
+                }
+                // println!("{}, {} -> {:?}", r, c, get_neighbors_5x5(r, c, 5, 5));
+            }
+        }
+    }
 }
