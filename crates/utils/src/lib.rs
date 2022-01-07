@@ -71,16 +71,20 @@ mod tests {
 
     #[test]
     fn test_get_neighbors() {
-        for r in 0..5 {
-            for c in 0..5 {
-                let xs = get_neighbors(r, c, 5, 5);
-                match (r, c) {
-                    (0, 0) | (0, 4) | (4, 0) | (4, 4) => assert_eq!(3, xs.len()),
-                    (0, _) | (4, _) | (_, 0) | (_, 4) => assert_eq!(5, xs.len()),
-                    _ => assert_eq!(8, xs.len()),
+        for r in 0..3 {
+            for c in 0..3 {
+                if let Some(xs) = get_neighbors(r, c, 3, 3) {
+                    match (r, c) {
+                        (0, 0) | (0, 2) | (2, 0) | (2, 2) => assert_eq!(3, xs.len()),
+                        (0, _) | (2, _) | (_, 0) | (_, 2) => assert_eq!(5, xs.len()),
+                        _ => assert_eq!(8, xs.len()),
+                    }
+                    println!("{}, {} -> {:?}", r, c, &xs);
                 }
-                // println!("{}, {} -> {:?}", r, c, get_neighbors_5x5(r, c, 5, 5));
             }
         }
+
+        assert_eq!(None, get_neighbors(0, 0, 2, 2));
+        assert_eq!(None, get_neighbors(0, 5, 5, 5));
     }
 }
