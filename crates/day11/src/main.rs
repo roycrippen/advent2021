@@ -33,28 +33,26 @@ fn part_b(xss: &Vec<Vec<u32>>) -> usize {
 }
 
 fn step(m: &mut Vec<Vec<u32>>) -> usize {
-    // increment all
+    // increment all energies
     for r in 0..m.len() {
         for c in 0..m[0].len() {
             m[r][c] += 1;
         }
     }
 
-    // flash recursively any energy 10
+    // flash recursively any energy equal 10
     let mut flash_count = 0;
     let mut flashed_map: HashSet<(usize, usize)> = HashSet::new();
     for r in 0..m.len() {
         for c in 0..m[0].len() {
-            if m[r][c] == 10 {
-                if !flashed_map.contains(&(r, c)) {
-                    flashed_map.insert((r, c));
-                    flash(r, c, m, &mut flash_count, &mut flashed_map);
-                }
+            if m[r][c] == 10 && !flashed_map.contains(&(r, c)) {
+                flashed_map.insert((r, c));
+                flash(r, c, m, &mut flash_count, &mut flashed_map);
             }
         }
     }
 
-    // set any energy 10 to 0
+    // set any energy equal 10 to 0
     for r in 0..m.len() {
         for c in 0..m[0].len() {
             if m[r][c] == 10 {
@@ -77,18 +75,13 @@ fn flash(r: usize, c: usize, m: &mut Vec<Vec<u32>>, cnt: &mut usize, flashed_map
 
     if let Some(neighbors) = get_neighbors(r, c, m.len(), m[0].len()) {
         for (nr, nc) in neighbors {
-            // already flashed?
-            if flashed_map.contains(&(nr, nc)) {
-                continue;
-            }
-
             // increment the neighbor
             if m[nr][nc] < 10 {
                 m[nr][nc] += 1;
             }
 
             // need to flash the neighbor?
-            if m[nr][nc] == 10 {
+            if m[nr][nc] == 10 && !flashed_map.contains(&(nr, nc)){
                 flashed_map.insert((nr, nc));
                 flash(nr, nc, m, cnt, flashed_map);
             }
