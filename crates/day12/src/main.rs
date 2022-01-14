@@ -65,8 +65,33 @@ impl Graph {
         let mut cnt = 0;
         self.traverse(&path, &mut completed_paths, part, &mut cnt);
 
-        println!("recursion count: {}", cnt);
+        // println!("recursion count: {}", cnt);
         completed_paths
+    }
+
+    fn traverse(&self, path: &Vec<String>, completed_paths: &mut Vec<Vec<String>>, part: &Part, cnt: &mut usize) {
+        if *cnt > 1_000_000 {
+            return;
+        }
+        *cnt += 1;
+
+        // expand the path
+        let expanded_paths = self.expand_paths(path, part);
+
+        // split paths into two groups
+        let (completes, incomplete_paths): (Vec<&Vec<String>>, Vec<&Vec<String>>) = expanded_paths
+            .iter()
+            .partition(|&p| p.last().unwrap().eq("end"));
+
+        // save completed paths
+        for p in completes {
+            completed_paths.push(p.clone());
+        }
+
+        // recurse remaining paths
+        for p in incomplete_paths {
+            self.traverse(p, completed_paths, part, cnt);
+        }
     }
 
     fn expand_paths(&self, path: &Vec<String>, part: &Part) -> Vec<Vec<String>> {
@@ -124,31 +149,6 @@ impl Graph {
             }
         }
         paths
-    }
-
-    fn traverse(&self, path: &Vec<String>, completed_paths: &mut Vec<Vec<String>>, part: &Part, cnt: &mut usize) {
-        if *cnt > 1_000_000 {
-            return;
-        }
-        *cnt += 1;
-
-        // expand the path
-        let expanded_paths = self.expand_paths(path, part);
-
-        // split paths into two groups
-        let (completes, incomplete_paths): (Vec<&Vec<String>>, Vec<&Vec<String>>) = expanded_paths
-            .iter()
-            .partition(|&p| p.last().unwrap().eq("end"));
-
-        // save completed paths
-        for p in completes {
-            completed_paths.push(p.clone());
-        }
-
-        // recurse remaining paths
-        for p in incomplete_paths {
-            self.traverse(p, completed_paths, part, cnt);
-        }
     }
 }
 
@@ -270,5 +270,4 @@ mod tests {
         let graph = read_input(InputType::Sample);
         assert_eq!(3509, part_b(&graph));
     }
-
 }
