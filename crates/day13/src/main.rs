@@ -84,6 +84,7 @@ fn fold_y(grid: &Vec<Vec<bool>>, y: usize) -> Vec<Vec<bool>> {
     // reverse the bottom rows to simulate folding
     bottom.reverse();
 
+    // fold the bottom over the top
     let folded = &mut top.to_vec();
     for r in 0..y {
         for c in 0..cols {
@@ -156,11 +157,6 @@ mod tests {
     fn test_part_a() {
         let (grid, folds) = read_input(InputType::Sample);
         assert_eq!(17, part_a(&grid, &folds));
-    }
-
-    #[test]
-    fn test_part_b() {
-        assert_eq!(true, true);
     }
 
     #[test]
