@@ -150,7 +150,7 @@ fn read_input(input_type: InputType) -> (Vec<Vec<bool>>, Vec<Fold>) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{count_grid, fold_x, fold_y, part_a, part_b, read_input, show_grid, Fold};
+    use crate::{count_grid, fold_x, fold_y, part_a, read_input, show_grid, Fold};
     use utils::InputType;
 
     #[test]
@@ -164,13 +164,13 @@ mod tests {
         let (grid, folds) = read_input(InputType::Sample);
 
         let mut folded = grid.clone();
-        // show_grid("start", &folded);
+        show_grid("start", &folded);
         for fold in folds {
             folded = match fold {
                 Fold::X(x) => fold_x(&folded, x),
                 Fold::Y(y) => fold_y(&folded, y),
             };
-            // show_grid(format!("{:?}", fold).as_str(), &folded);
+            show_grid(format!("{:?}", fold).as_str(), &folded);
         }
         assert_eq!(16, count_grid(&folded))
     }
