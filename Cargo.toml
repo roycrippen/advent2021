@@ -65,3 +65,7 @@ path =  "crates/day13/src/main.rs"
 name = "day14"
 path =  "crates/day14/src/main.rs"
 
+[[bin]]
+name = "day15"
+path =  "crates/day15/src/main.rs"
+
