@@ -37,7 +37,7 @@ fn solve(
 ) -> HashMap<char, usize> {
     let m = &mut template.clone();
 
-    // apply the riles n times mutating m
+    // apply the rules n times mutating m
     for _ in 1..=n {
         apply_rules(m, &rules);
     }
@@ -65,12 +65,10 @@ fn solve(
 }
 
 fn apply_rules(template: &mut HashMap<String, usize>, rules: &HashMap<String, (String, String)>) {
-    let tm = template.clone();
+    // find additions and subtractions to apply to the template
     let mut additions: Vec<(String, usize)> = Vec::new();
     let mut subtractions: Vec<(String, usize)> = Vec::new();
-
-    // find additions and subtractions to apply to the template
-    for (k, v) in tm {
+    for (k, v) in template.clone() {
         if v != 0 {
             let (rule_key1, rule_key2) = rules.get(&k).unwrap();
             additions.push((rule_key1.clone(), v));
@@ -79,7 +77,7 @@ fn apply_rules(template: &mut HashMap<String, usize>, rules: &HashMap<String, (S
         }
     }
 
-    // mutate by applying subtractions
+    // mutate template by applying subtractions
     for (k, v) in &subtractions {
         if let Some(template_v) = template.get(k).cloned() {
             if template_v >= *v {
@@ -92,8 +90,6 @@ fn apply_rules(template: &mut HashMap<String, usize>, rules: &HashMap<String, (S
     for (k, v) in &additions {
         if let Some(template_v) = template.get(k).cloned() {
             template.insert(k.clone(), template_v + v);
-        } else {
-            template.insert(k.clone(), *v);
         }
     }
 }
@@ -112,35 +108,34 @@ fn read_input(
         }
     };
 
-    let mut template: HashMap<String, usize> = HashMap::new();
-    let mut rules: HashMap<String, (String, String)> = HashMap::new();
-    let ss: Vec<&str> = data.lines().collect();
-    let mut last_char = ' ';
-    for s in ss {
-        if s.is_empty() {
-            continue;
-        }
+    // get template string and throw away the blank line
+    let ss = &mut data.lines();
+    let template_s = ss.next().unwrap();
+    ss.next();
 
-        if template.is_empty() {
-            let cs: Vec<char> = s.chars().collect();
-            last_char = *cs.last().unwrap();
-            for i in 0..cs.len() - 1 {
-                let k = format!("{}{}", cs[i], cs[i + 1]);
-                if template.contains_key(&k) {
-                    template.insert(k.clone(), template.get(&k).unwrap() + 1);
-                } else {
-                    template.insert(k, 1);
-                }
-            }
+    // loop over the rest to fill rules map
+    let mut rules: HashMap<String, (String, String)> = HashMap::new();
+    for s in ss {
+        let tup: Vec<&str> = s.split(" -> ").take(2).collect();
+        let ks: Vec<char> = tup[0].chars().collect();
+        let value: (String, String) = (
+            format!("{}{}", ks[0], tup[1]),
+            format!("{}{}", tup[1], ks[1]),
+        );
+        let k = ks.into_iter().collect();
+        rules.insert(k, value);
+    }
+
+    // create template map
+    let mut template: HashMap<String, usize> = rules.iter().map(|(k, _)| (k.clone(), 0)).collect();
+    let cs: Vec<char> = template_s.chars().collect();
+    let last_char = *cs.last().unwrap();
+    for i in 0..cs.len() - 1 {
+        let k = format!("{}{}", cs[i], cs[i + 1]);
+        if template.contains_key(&k) {
+            template.insert(k.clone(), template.get(&k).unwrap() + 1);
         } else {
-            let tup: Vec<&str> = s.split(" -> ").take(2).collect();
-            let ks: Vec<char> = tup[0].chars().collect();
-            let value: (String, String) = (
-                format!("{}{}", ks[0], tup[1]),
-                format!("{}{}", tup[1], ks[1]),
-            );
-            let k = ks.into_iter().collect();
-            rules.insert(k, value);
+            template.insert(k, 1);
         }
     }
 
