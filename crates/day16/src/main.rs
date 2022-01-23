@@ -2,8 +2,8 @@ use utils::InputType;
 
 fn main() {
     let aaa = read_input(InputType::Input);
-    println!("Day15 part a = {}", part_a(aaa));
-    println!("Day15 part b = {}", part_b(aaa));
+    println!("Day16 part a = {}", part_a(aaa));
+    println!("Day16 part b = {}", part_b(aaa));
 }
 
 fn part_a(_xs: ()) -> usize {
