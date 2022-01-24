@@ -1,47 +1,188 @@
-use std::cmp;
-
 use utils::InputType;
 
 fn main() {
-    let xss = read_input(InputType::Input);
-    println!("Day15 part a = {}", part_a(&xss)); // 595
-    println!("Day15 part b = {}", part_b(&xss));
+    let graph = read_input(InputType::Input);
+    println!("Day15 part a = {}", part_a(&graph)); //
+    println!("Day15 part b = {}", part_b(&graph)); //
 }
 
-fn part_a(yss: &Vec<Vec<u32>>) -> u32 {
-    let mut xss = yss.clone();
-    solve(&mut xss);
-    let last_idx = xss.len() - 1;
-
-    xss[last_idx][last_idx] - xss[0][0]
+fn part_a(graph: &Graph) -> u32 {
+    if graph.ns.len() <= 100 {
+        println!("graph = ");
+        graph.show();
+    }
+    40
 }
 
-fn part_b(_yss: &Vec<Vec<u32>>) -> usize {
+fn part_b(_graph: &Graph) -> usize {
     0
 }
 
-fn solve(xss: &mut Vec<Vec<u32>>) {
-    let len = xss.len();
-
-    let mut zs: Vec<(usize, usize)> = vec![];
-
-    // accumulate first row and column
-    for i in 1..len {
-        xss[0][i] += xss[0][i - 1];
-        xss[i][0] += xss[i - 1][0];
-    }
-
-    // traverse and mutate matrix
-    for i in 1..len {
-        for j in 1..len {
-            xss[i][j] += cmp::min(xss[i - 1][j], xss[i][j - 1]);
-        }
-    }
-
-    show_grid(0, len, &xss)
+#[derive(Debug, Clone, PartialEq)]
+struct Node {
+    key: (usize, usize),
+    edges: Vec<((usize, usize), u32)>,
 }
 
-fn read_input(input_type: InputType) -> Vec<Vec<u32>> {
+#[derive(Debug)]
+struct Graph {
+    ns: Vec<Node>,
+}
+
+impl Graph {
+    fn new(vss: &Vec<Vec<u32>>) -> Graph {
+        let rows = vss.len();
+        let cols = vss[0].len();
+        let mut ns: Vec<Node> = vec![];
+
+        // top left corner
+        let edges: Vec<((usize, usize), u32)> = vec![((0, 1), vss[0][1]), ((1, 0), vss[1][0])];
+        ns.push(Node { key: (0, 0), edges });
+
+        // top right corner
+        let edges: Vec<((usize, usize), u32)> = vec![
+            ((0, cols - 2), vss[0][cols - 2]),
+            ((1, cols - 1), vss[1][cols - 1]),
+        ];
+        ns.push(Node {
+            key: (0, cols - 1),
+            edges,
+        });
+
+        // bottom left corner
+        let edges: Vec<((usize, usize), u32)> = vec![
+            ((rows - 1, 1), vss[rows - 1][1]),
+            ((rows - 2, 0), vss[rows - 2][0]),
+        ];
+        ns.push(Node {
+            key: (rows - 1, 0),
+            edges,
+        });
+
+        // bottom right
+        let edges: Vec<((usize, usize), u32)> = vec![
+            ((rows - 1, cols - 2), vss[rows - 1][cols - 2]),
+            ((rows - 2, cols - 1), vss[rows - 2][cols - 1]),
+        ];
+        ns.push(Node {
+            key: (rows - 1, cols - 1),
+            edges,
+        });
+
+        // first row
+        for j in 1..cols - 1 {
+            let key = (0, j);
+            let edges: Vec<((usize, usize), u32)> = vec![
+                ((0, j - 1), vss[0][j - 1]),
+                ((1, j), vss[1][j]),
+                ((0, j + 1), vss[0][j + 1]),
+            ];
+            ns.push(Node { key, edges });
+        }
+
+        // last row
+        for j in 1..cols - 1 {
+            let key = (rows - 1, j);
+            let edges: Vec<((usize, usize), u32)> = vec![
+                ((rows - 1, j - 1), vss[rows - 1][j - 1]),
+                ((rows - 2, j), vss[rows - 2][j]),
+                ((rows - 1, j + 1), vss[rows - 1][j + 1]),
+            ];
+            ns.push(Node { key, edges });
+        }
+
+        // first col
+        for i in 1..rows - 1 {
+            let key = (i, 0);
+            let edges: Vec<((usize, usize), u32)> = vec![
+                ((i - 1, 0), vss[i - 1][0]),
+                ((i, 1), vss[i][i]),
+                ((i + 1, 0), vss[i + 1][0]),
+            ];
+            ns.push(Node { key, edges });
+        }
+
+        // last col
+        for i in 1..rows - 1 {
+            let key = (i, cols - 1);
+            let edges: Vec<((usize, usize), u32)> = vec![
+                ((i - 1, cols - 1), vss[i - 1][cols - 1]),
+                ((i, cols - 2), vss[i][cols - 2]),
+                ((i + 1, cols - 1), vss[i + 1][cols - 1]),
+            ];
+            ns.push(Node { key, edges });
+        }
+
+        // rest
+        for i in 1..rows - 1 {
+            for j in 1..cols - 1 {
+                let key = (i, j);
+                let edges: Vec<((usize, usize), u32)> = vec![
+                    ((i - 1, j), vss[i - 1][j]),
+                    ((i + 1, j), vss[i + 1][j]),
+                    ((i, j + 1), vss[i][j + 1]),
+                    ((i, j - 1), vss[i][j - 1]),
+                ];
+                ns.push(Node { key, edges });
+            }
+        }
+
+        Graph { ns }
+    }
+
+    fn show(&self) {
+        for n in self.ns.clone() {
+            println!("{:?} -> {:?}", n.key, n.edges)
+        }
+        println!("");
+    }
+}
+
+// fn solve(xss: &mut Vec<Vec<u32>>) {
+//     let rows = xss.len();
+//     let cols = xss[0].len();
+
+//     show_grid(&xss);
+
+//     // accumulate first row
+//     for j in 1..cols {
+//         xss[0][j] += cmp::min(xss[0][j - 1], xss[1][j]);
+//     }
+
+//     // accumulate first column
+//     for i in 1..rows {
+//         xss[i][0] += cmp::min(xss[i - 1][0], xss[i][1]);
+//     }
+
+//     // traverse and mutate matrix
+//     for i in 1..rows - 1 {
+//         for j in 1..cols - 1 {
+//             let up_and_left = cmp::min(xss[i - 1][j], xss[i][j - 1]);
+//             let down_and_right = cmp::min(xss[i + 1][j], xss[i][j + 1]);
+//             xss[i][j] += cmp::min(up_and_left, down_and_right);
+//         }
+//     }
+
+//     show_grid(&xss)
+// }
+
+// fn read_input1(input_type: InputType) -> Vec<Vec<u32>> {
+//     let data = {
+//         match input_type {
+//             InputType::Sample => include_str!("sample.txt"),
+//             InputType::Input => include_str!("input.txt"),
+//         }
+//     };
+
+//     let xss = data
+//         .lines()
+//         .map(|xs| xs.chars().map(|c| c.to_digit(10).unwrap()).collect())
+//         .collect();
+
+//     xss
+// }
+
+fn read_input(input_type: InputType) -> Graph {
     let data = {
         match input_type {
             InputType::Sample => include_str!("sample.txt"),
@@ -49,34 +190,39 @@ fn read_input(input_type: InputType) -> Vec<Vec<u32>> {
         }
     };
 
-    let xss = data
+    let vss: Vec<Vec<u32>> = data
         .lines()
         .map(|xs| xs.chars().map(|c| c.to_digit(10).unwrap()).collect())
         .collect();
 
-    xss
+    Graph::new(&vss)
 }
 
-fn show_grid(start: usize, end: usize, xss: &Vec<Vec<u32>>) {
-    for i in start..end {
-        for j in start..end {
-            print!("{:>4}", xss[i][j]);
-        }
-        println!("");
-    }
-    println!("");
-}
+// fn show_grid(xss: &Vec<Vec<u32>>) {
+//     let rows = xss.len();
+//     let cols = xss[0].len();
+
+//     for i in 0..rows {
+//         for j in 0..cols {
+//             print!("{:>4}", xss[i][j]);
+//         }
+//         println!("");
+//     }
+//     println!("");
+// }
 
 #[cfg(test)]
 mod tests {
     use utils::InputType;
 
-    use crate::{part_a, read_input, solve};
+    use crate::{part_a, read_input, Graph};
 
     #[test]
     fn test_part_a() {
-        let xss = read_input(InputType::Sample);
-        assert_eq!(40, part_a(&xss));
+        let graph = read_input(InputType::Sample);
+        assert_eq!(100, graph.ns.len());
+
+        assert_eq!(40, part_a(&graph));
     }
 
     #[test]
@@ -86,22 +232,14 @@ mod tests {
 
     #[test]
     fn test_solve() {
-        let mut xss: Vec<Vec<u32>> = vec![
-            vec![1, 1, 6, 3],
-            vec![1, 3, 8, 1],
-            vec![2, 1, 3, 6],
-            vec![3, 6, 9, 4],
+        let vss: Vec<Vec<u32>> = vec![
+            vec![1, 9, 9, 9, 9],
+            vec![1, 9, 1, 1, 1],
+            vec![1, 1, 1, 9, 1],
         ];
 
-        let show_grid = |yss| {
-            for ys in yss {
-                println!("{:?}", ys)
-            }
-            println!("");
-        };
+        let graph = Graph::new(&vss);
 
-        show_grid(xss.clone());
-        solve(&mut xss);
-        show_grid(xss.clone());
+        graph.show()
     }
 }
