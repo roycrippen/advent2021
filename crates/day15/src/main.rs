@@ -87,10 +87,12 @@ impl Graph {
     }
 
     fn dijkstra(&self, source: (usize, usize), destination: (usize, usize)) -> Option<u32> {
+        // https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+
         // dist from source
         let mut dist: HashMap<(usize, usize), u32> = HashMap::new();
 
-        // priority queue
+        // priority queue of edges
         let mut heap: BinaryHeap<Edge> = BinaryHeap::new();
 
         // initialize
