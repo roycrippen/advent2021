@@ -1,186 +1,136 @@
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap};
+
 use utils::InputType;
 
 fn main() {
     let graph = read_input(InputType::Input);
-    println!("Day15 part a = {}", part_a(&graph)); //
+    println!("Day15 part a = {}", part_a(&graph, false)); // 589
     println!("Day15 part b = {}", part_b(&graph)); //
 }
 
-fn part_a(graph: &Graph) -> u32 {
-    if graph.ns.len() <= 100 {
+fn part_a(graph: &Graph, debug: bool) -> u32 {
+    if debug {
         println!("graph = ");
         graph.show();
     }
-    40
+
+    let destination = *graph.nodes.keys().max().unwrap();
+    if let Some(cost) = graph.dijkstra((1, 1), destination) {
+        cost
+    } else {
+        0
+    }
 }
 
 fn part_b(_graph: &Graph) -> usize {
     0
 }
 
-#[derive(Debug, Clone, PartialEq)]
-struct Node {
-    key: (usize, usize),
-    edges: Vec<((usize, usize), u32)>,
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+struct Edge((usize, usize), u32);
+
+impl Ord for Edge {
+    fn cmp(&self, other: &Edge) -> Ordering {
+        other.1.cmp(&self.1).then_with(|| self.0.cmp(&other.0))
+    }
+}
+
+impl PartialOrd for Edge {
+    fn partial_cmp(&self, other: &Edge) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 #[derive(Debug)]
 struct Graph {
-    ns: Vec<Node>,
+    nodes: HashMap<(usize, usize), HashMap<(usize, usize), Edge>>,
 }
 
 impl Graph {
-    fn new(vss: &Vec<Vec<u32>>) -> Graph {
+    fn new(mut vss: Vec<Vec<u32>>) -> Graph {
+        // fill perimeter with zeros
+        for vs in &mut vss {
+            vs.insert(0, 0);
+            vs.push(0);
+        }
+        let zeros = vec![0u32; vss[0].len()];
+        vss.insert(0, zeros.clone());
+        vss.push(zeros);
+
         let rows = vss.len();
         let cols = vss[0].len();
-        let mut ns: Vec<Node> = vec![];
+        let mut nodes: HashMap<(usize, usize), HashMap<(usize, usize), Edge>> = HashMap::new();
 
-        // top left corner
-        let edges: Vec<((usize, usize), u32)> = vec![((0, 1), vss[0][1]), ((1, 0), vss[1][0])];
-        ns.push(Node { key: (0, 0), edges });
-
-        // top right corner
-        let edges: Vec<((usize, usize), u32)> = vec![
-            ((0, cols - 2), vss[0][cols - 2]),
-            ((1, cols - 1), vss[1][cols - 1]),
-        ];
-        ns.push(Node {
-            key: (0, cols - 1),
-            edges,
-        });
-
-        // bottom left corner
-        let edges: Vec<((usize, usize), u32)> = vec![
-            ((rows - 1, 1), vss[rows - 1][1]),
-            ((rows - 2, 0), vss[rows - 2][0]),
-        ];
-        ns.push(Node {
-            key: (rows - 1, 0),
-            edges,
-        });
-
-        // bottom right
-        let edges: Vec<((usize, usize), u32)> = vec![
-            ((rows - 1, cols - 2), vss[rows - 1][cols - 2]),
-            ((rows - 2, cols - 1), vss[rows - 2][cols - 1]),
-        ];
-        ns.push(Node {
-            key: (rows - 1, cols - 1),
-            edges,
-        });
-
-        // first row
-        for j in 1..cols - 1 {
-            let key = (0, j);
-            let edges: Vec<((usize, usize), u32)> = vec![
-                ((0, j - 1), vss[0][j - 1]),
-                ((1, j), vss[1][j]),
-                ((0, j + 1), vss[0][j + 1]),
-            ];
-            ns.push(Node { key, edges });
-        }
-
-        // last row
-        for j in 1..cols - 1 {
-            let key = (rows - 1, j);
-            let edges: Vec<((usize, usize), u32)> = vec![
-                ((rows - 1, j - 1), vss[rows - 1][j - 1]),
-                ((rows - 2, j), vss[rows - 2][j]),
-                ((rows - 1, j + 1), vss[rows - 1][j + 1]),
-            ];
-            ns.push(Node { key, edges });
-        }
-
-        // first col
-        for i in 1..rows - 1 {
-            let key = (i, 0);
-            let edges: Vec<((usize, usize), u32)> = vec![
-                ((i - 1, 0), vss[i - 1][0]),
-                ((i, 1), vss[i][i]),
-                ((i + 1, 0), vss[i + 1][0]),
-            ];
-            ns.push(Node { key, edges });
-        }
-
-        // last col
-        for i in 1..rows - 1 {
-            let key = (i, cols - 1);
-            let edges: Vec<((usize, usize), u32)> = vec![
-                ((i - 1, cols - 1), vss[i - 1][cols - 1]),
-                ((i, cols - 2), vss[i][cols - 2]),
-                ((i + 1, cols - 1), vss[i + 1][cols - 1]),
-            ];
-            ns.push(Node { key, edges });
-        }
-
-        // rest
+        // build graph
         for i in 1..rows - 1 {
             for j in 1..cols - 1 {
                 let key = (i, j);
-                let edges: Vec<((usize, usize), u32)> = vec![
-                    ((i - 1, j), vss[i - 1][j]),
-                    ((i + 1, j), vss[i + 1][j]),
-                    ((i, j + 1), vss[i][j + 1]),
-                    ((i, j - 1), vss[i][j - 1]),
-                ];
-                ns.push(Node { key, edges });
+
+                let mut neighbors: HashMap<(usize, usize), Edge> = HashMap::new();
+                neighbors.insert((i - 1, j), Edge((i - 1, j), vss[i - 1][j]));
+                neighbors.insert((i + 1, j), Edge((i + 1, j), vss[i + 1][j]));
+                neighbors.insert((i, j + 1), Edge((i, j + 1), vss[i][j + 1]));
+                neighbors.insert((i, j - 1), Edge((i, j - 1), vss[i][j - 1]));
+
+                neighbors = neighbors
+                    .iter()
+                    .filter(|(_, edge)| edge.1 > 0)
+                    .map(|(node, edge)| (*node, *edge))
+                    .collect();
+
+                nodes.insert(key, neighbors);
             }
         }
 
-        Graph { ns }
+        Graph { nodes }
+    }
+
+    fn dijkstra(&self, source: (usize, usize), destination: (usize, usize)) -> Option<u32> {
+        // dist from source
+        let mut dist: HashMap<(usize, usize), u32> = HashMap::new();
+
+        // priority queue
+        let mut heap: BinaryHeap<Edge> = BinaryHeap::new();
+
+        // initialize
+        for v_node in self.nodes.iter() {
+            if *v_node.0 != source {
+                dist.insert(*v_node.0, std::u32::MAX);
+                heap.push(Edge(*v_node.0, std::u32::MAX));
+            } else {
+                dist.insert(source, 0);
+                heap.push(Edge(source, 0));
+            }
+        }
+
+        while !heap.is_empty() {
+            if let Some(Edge(u_node, _u_cost)) = heap.pop() {
+                // are we at the destination?
+                if u_node == destination {
+                    return Some(*dist.get(&destination).unwrap());
+                }
+
+                // look at the neighbors
+                for (v_node, Edge(_, cost)) in self.nodes.get(&u_node).unwrap().iter() {
+                    let alt = *dist.get(&u_node).unwrap() + cost;
+                    if alt < *dist.get(v_node).unwrap() {
+                        dist.insert(*v_node, alt);
+                        heap.push(Edge(*v_node, alt));
+                    }
+                }
+            }
+        }
+        None
     }
 
     fn show(&self) {
-        for n in self.ns.clone() {
-            println!("{:?} -> {:?}", n.key, n.edges)
+        for edge in self.nodes.clone() {
+            println!("{:>3?} -> {:?}", edge.0, edge.1)
         }
         println!("");
     }
 }
-
-// fn solve(xss: &mut Vec<Vec<u32>>) {
-//     let rows = xss.len();
-//     let cols = xss[0].len();
-
-//     show_grid(&xss);
-
-//     // accumulate first row
-//     for j in 1..cols {
-//         xss[0][j] += cmp::min(xss[0][j - 1], xss[1][j]);
-//     }
-
-//     // accumulate first column
-//     for i in 1..rows {
-//         xss[i][0] += cmp::min(xss[i - 1][0], xss[i][1]);
-//     }
-
-//     // traverse and mutate matrix
-//     for i in 1..rows - 1 {
-//         for j in 1..cols - 1 {
-//             let up_and_left = cmp::min(xss[i - 1][j], xss[i][j - 1]);
-//             let down_and_right = cmp::min(xss[i + 1][j], xss[i][j + 1]);
-//             xss[i][j] += cmp::min(up_and_left, down_and_right);
-//         }
-//     }
-
-//     show_grid(&xss)
-// }
-
-// fn read_input1(input_type: InputType) -> Vec<Vec<u32>> {
-//     let data = {
-//         match input_type {
-//             InputType::Sample => include_str!("sample.txt"),
-//             InputType::Input => include_str!("input.txt"),
-//         }
-//     };
-
-//     let xss = data
-//         .lines()
-//         .map(|xs| xs.chars().map(|c| c.to_digit(10).unwrap()).collect())
-//         .collect();
-
-//     xss
-// }
 
 fn read_input(input_type: InputType) -> Graph {
     let data = {
@@ -195,21 +145,8 @@ fn read_input(input_type: InputType) -> Graph {
         .map(|xs| xs.chars().map(|c| c.to_digit(10).unwrap()).collect())
         .collect();
 
-    Graph::new(&vss)
+    Graph::new(vss)
 }
-
-// fn show_grid(xss: &Vec<Vec<u32>>) {
-//     let rows = xss.len();
-//     let cols = xss[0].len();
-
-//     for i in 0..rows {
-//         for j in 0..cols {
-//             print!("{:>4}", xss[i][j]);
-//         }
-//         println!("");
-//     }
-//     println!("");
-// }
 
 #[cfg(test)]
 mod tests {
@@ -220,9 +157,9 @@ mod tests {
     #[test]
     fn test_part_a() {
         let graph = read_input(InputType::Sample);
-        assert_eq!(100, graph.ns.len());
+        assert_eq!(100, graph.nodes.len());
 
-        assert_eq!(40, part_a(&graph));
+        assert_eq!(40, part_a(&graph, false));
     }
 
     #[test]
@@ -238,8 +175,15 @@ mod tests {
             vec![1, 1, 1, 9, 1],
         ];
 
-        let graph = Graph::new(&vss);
+        let graph = Graph::new(vss);
+        assert_eq!(15, graph.nodes.len());
 
-        graph.show()
+        graph.show();
+        if let Some(cost) = graph.dijkstra((1, 1), (3, 5)) {
+            println!("cost = {}", cost);
+            assert_eq!(8, cost);
+        } else {
+            assert!(false, "no solution")
+        }
     }
 }
