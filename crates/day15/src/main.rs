@@ -4,9 +4,11 @@ use std::collections::{BinaryHeap, HashMap};
 use utils::InputType;
 
 fn main() {
-    let graph = read_input(InputType::Input);
+    let graph = read_input(InputType::Input, false);
     println!("Day15 part a = {}", part_a(&graph, false)); // 589
-    println!("Day15 part b = {}", part_b(&graph)); //
+
+    let graph = read_input(InputType::Input, true);
+    println!("Day15 part b = {}", part_b(&graph)); // 2885
 }
 
 fn part_a(graph: &Graph, debug: bool) -> u32 {
@@ -23,8 +25,13 @@ fn part_a(graph: &Graph, debug: bool) -> u32 {
     }
 }
 
-fn part_b(_graph: &Graph) -> usize {
-    0
+fn part_b(graph: &Graph) -> u32 {
+    let destination = *graph.nodes.keys().max().unwrap();
+    if let Some(cost) = graph.dijkstra((1, 1), destination) {
+        cost
+    } else {
+        0
+    }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -48,7 +55,9 @@ struct Graph {
 }
 
 impl Graph {
-    fn new(mut vss: Vec<Vec<u32>>) -> Graph {
+    fn new(xss: &Vec<Vec<u32>>) -> Graph {
+        let mut vss = xss.clone();
+
         // fill perimeter with zeros
         for vs in &mut vss {
             vs.insert(0, 0);
@@ -134,7 +143,7 @@ impl Graph {
     }
 }
 
-fn read_input(input_type: InputType) -> Graph {
+fn read_input(input_type: InputType, is_expanded: bool) -> Graph {
     let data = {
         match input_type {
             InputType::Sample => include_str!("sample.txt"),
@@ -142,12 +151,50 @@ fn read_input(input_type: InputType) -> Graph {
         }
     };
 
-    let vss: Vec<Vec<u32>> = data
+    let mut xss: Vec<Vec<u32>> = data
         .lines()
         .map(|xs| xs.chars().map(|c| c.to_digit(10).unwrap()).collect())
         .collect();
 
-    Graph::new(vss)
+    if is_expanded {
+        let rows = xss.len();
+        let cols = xss[0].len();
+
+        // expand cols
+        for i in 0..4 {
+            for row in 0..rows {
+                for col in 0..cols {
+                    let x = xss[row][col + cols * i] + 1;
+                    if x > 9 {
+                        xss[row].push(1);
+                    } else {
+                        xss[row].push(x);
+                    }
+                }
+            }
+        }
+
+        // expand rows
+        let mut r_idx = rows - 1;
+        let cols = xss[0].len();
+        for i in 0..4 {
+            for row in 0..rows {
+                let xs = vec![0u32; cols];
+                xss.push(xs);
+                r_idx += 1;
+                for col in 0..cols {
+                    let x = xss[row + rows * i][col] + 1;
+                    if x > 9 {
+                        xss[r_idx][col] = 1;
+                    } else {
+                        xss[r_idx][col] = x;
+                    }
+                }
+            }
+        }
+    }
+
+    Graph::new(&xss)
 }
 
 #[cfg(test)]
@@ -158,26 +205,29 @@ mod tests {
 
     #[test]
     fn test_part_a() {
-        let graph = read_input(InputType::Sample);
-        assert_eq!(100, graph.nodes.len());
+        let graph = read_input(InputType::Sample, false);
+        assert_eq!(10 * 10, graph.nodes.len());
 
         assert_eq!(40, part_a(&graph, false));
     }
 
     #[test]
     fn test_part_b() {
-        assert_eq!(true, true);
+        let graph = read_input(InputType::Sample, true);
+        assert_eq!(50 * 50, graph.nodes.len());
+
+        assert_eq!(315, part_a(&graph, false));
     }
 
     #[test]
     fn test_solve() {
-        let vss: Vec<Vec<u32>> = vec![
+        let xss: Vec<Vec<u32>> = vec![
             vec![1, 9, 9, 9, 9],
             vec![1, 9, 1, 1, 1],
             vec![1, 1, 1, 9, 1],
         ];
 
-        let graph = Graph::new(vss);
+        let graph = Graph::new(&xss);
         assert_eq!(15, graph.nodes.len());
 
         graph.show();
