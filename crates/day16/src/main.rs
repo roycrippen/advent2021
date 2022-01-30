@@ -1,17 +1,19 @@
+use std::usize;
+
 use utils::InputType;
 
 fn main() {
     let packet = read_input(InputType::Input);
     println!("Day16 part a = {}", part_a(&packet)); // 879
-    println!("Day16 part b = {}", part_b(&packet));
+    println!("Day16 part b = {}", part_b(&packet)); // 539051801941
 }
 
 fn part_a(packet: &Packet) -> u32 {
     packet.sum_versions()
 }
 
-fn part_b(_packet: &Packet) -> u32 {
-    0
+fn part_b(packet: &Packet) -> usize {
+    packet.eval()
 }
 
 #[derive(Debug, PartialEq)]
@@ -73,7 +75,7 @@ impl Packet {
                                 break;
                             }
                         }
-                        let type_id = TypeId::Operator((type_id_num, ps));
+                        let type_id = TypeId::Operator((Op::new(type_id_num), ps));
                         let packet = Packet { version, type_id };
                         (bits.to_owned(), packet)
                     }
@@ -88,7 +90,7 @@ impl Packet {
                             cs = temp;
                         }
 
-                        let type_id = TypeId::Operator((type_id_num, ps));
+                        let type_id = TypeId::Operator((Op::new(type_id_num), ps));
                         let packet = Packet { version, type_id };
                         (cs.to_owned(), packet)
                     }
@@ -106,13 +108,62 @@ impl Packet {
             self.version
         }
     }
+
+    fn eval(&self) -> usize {
+        match &self.type_id {
+            TypeId::Literal(v) => *v,
+            TypeId::Operator((op, ps)) => {
+                let vs: Vec<usize> = ps.iter().map(Packet::eval).collect();
+                match &op {
+                    Op::Sum => vs.into_iter().sum(),
+                    Op::Product => vs.into_iter().fold(1, |acc, v| acc * v),
+                    Op::Min => vs
+                        .into_iter()
+                        .fold(usize::MAX, |acc, v| if v < acc { v } else { acc }),
+                    Op::Max => vs
+                        .into_iter()
+                        .fold(usize::MIN, |acc, v| if v > acc { v } else { acc }),
+                    Op::GT => vs[0].gt(&vs[1]) as usize,
+                    Op::LT => vs[0].lt(&vs[1]) as usize,
+                    Op::EQ => vs[0].eq(&vs[1]) as usize,
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
 pub enum TypeId {
     Literal(usize),
-    Operator((u32, Vec<Packet>)),
+    Operator((Op, Vec<Packet>)),
 }
+
+#[derive(Debug, PartialEq)]
+pub enum Op {
+    Sum = 0,
+    Product = 1,
+    Min = 2,
+    Max = 3,
+    GT = 5,
+    LT = 6,
+    EQ = 7,
+}
+
+impl Op {
+    pub fn new(v: u32) -> Op {
+        match v {
+            0 => Op::Sum,
+            1 => Op::Product,
+            2 => Op::Min,
+            3 => Op::Max,
+            5 => Op::GT,
+            6 => Op::LT,
+            7 => Op::EQ,
+            _ => panic!("not a valid op code"),
+        }
+    }
+}
+
 fn read_input(input_type: InputType) -> Packet {
     let data = {
         match input_type {
@@ -150,12 +201,6 @@ pub fn decode_hex(s: &str) -> Vec<char> {
         .map(|c| decode_hex_char(&c).unwrap())
         .flat_map(|cs| cs)
         .collect()
-
-    // let mut cs: Vec<char> = vec![];
-    // for ch in s.chars() {
-    //     cs.append(&mut decode_hex_char(&ch)?);
-    // }
-    // Some(cs)
 }
 
 pub fn chars_to_u32(cs: &[char]) -> u32 {
@@ -165,7 +210,7 @@ pub fn chars_to_u32(cs: &[char]) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::{decode_hex, Packet, TypeId, TypeId::Literal, TypeId::Operator};
+    use crate::{decode_hex, Op, Packet, TypeId, TypeId::Literal, TypeId::Operator};
 
     #[test]
     fn test_parse1() {
@@ -194,7 +239,7 @@ mod tests {
         let should_be = Packet {
             version: 1,
             type_id: Operator((
-                6,
+                Op::LT,
                 vec![
                     Packet {
                         version: 6,
@@ -221,7 +266,7 @@ mod tests {
         let should_be = Packet {
             version: 7,
             type_id: Operator((
-                3,
+                Op::Max,
                 vec![
                     Packet {
                         version: 2,
@@ -269,7 +314,37 @@ mod tests {
     }
 
     #[test]
-    fn test_part_b() {
-        assert_eq!(true, true);
+    fn test_eval() {
+        let s = "C200B40A82";
+        let packet = Packet::new(decode_hex(s));
+        assert_eq!(3, packet.eval());
+
+        let s = "04005AC33890";
+        let packet = Packet::new(decode_hex(s));
+        assert_eq!(54, packet.eval());
+
+        let s = "880086C3E88112";
+        let packet = Packet::new(decode_hex(s));
+        assert_eq!(7, packet.eval());
+
+        let s = "CE00C43D881120";
+        let packet = Packet::new(decode_hex(s));
+        assert_eq!(9, packet.eval());
+
+        let s = "D8005AC2A8F0";
+        let packet = Packet::new(decode_hex(s));
+        assert_eq!(1, packet.eval());
+
+        let s = "F600BC2D8F";
+        let packet = Packet::new(decode_hex(s));
+        assert_eq!(0, packet.eval());
+
+        let s = "9C005AC2F8F0";
+        let packet = Packet::new(decode_hex(s));
+        assert_eq!(0, packet.eval());
+
+        let s = "9C0141080250320F1802104A08";
+        let packet = Packet::new(decode_hex(s));
+        assert_eq!(1, packet.eval());
     }
 }
