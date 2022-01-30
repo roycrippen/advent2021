@@ -17,6 +17,38 @@ fn part_b(packet: &Packet) -> usize {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum TypeId {
+    Literal(usize),
+    Operator((Op, Vec<Packet>)),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Op {
+    Sum = 0,
+    Product = 1,
+    Min = 2,
+    Max = 3,
+    GT = 5,
+    LT = 6,
+    EQ = 7,
+}
+
+impl Op {
+    pub fn new(v: u32) -> Op {
+        match v {
+            0 => Op::Sum,
+            1 => Op::Product,
+            2 => Op::Min,
+            3 => Op::Max,
+            5 => Op::GT,
+            6 => Op::LT,
+            7 => Op::EQ,
+            _ => panic!("not a valid op code"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub struct Packet {
     version: u32,
     type_id: TypeId,
@@ -128,38 +160,6 @@ impl Packet {
                     Op::EQ => vs[0].eq(&vs[1]) as usize,
                 }
             }
-        }
-    }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum TypeId {
-    Literal(usize),
-    Operator((Op, Vec<Packet>)),
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Op {
-    Sum = 0,
-    Product = 1,
-    Min = 2,
-    Max = 3,
-    GT = 5,
-    LT = 6,
-    EQ = 7,
-}
-
-impl Op {
-    pub fn new(v: u32) -> Op {
-        match v {
-            0 => Op::Sum,
-            1 => Op::Product,
-            2 => Op::Min,
-            3 => Op::Max,
-            5 => Op::GT,
-            6 => Op::LT,
-            7 => Op::EQ,
-            _ => panic!("not a valid op code"),
         }
     }
 }
