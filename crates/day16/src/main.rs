@@ -99,13 +99,12 @@ impl Packet {
     }
 
     fn sum_versions(&self) -> u32 {
-        let mut cnt = self.version;
         if let TypeId::Operator((_, ps)) = &self.type_id {
-            for p in ps {
-                cnt += p.sum_versions();
-            }
+            let cnt: u32 = ps.iter().map(Packet::sum_versions).sum();
+            cnt + self.version
+        } else {
+            self.version
         }
-        cnt
     }
 }
 
@@ -121,7 +120,7 @@ fn read_input(input_type: InputType) -> Packet {
             InputType::Input => include_str!("input.txt"),
         }
     };
-    Packet::new(decode_hex(data).unwrap())
+    Packet::new(decode_hex(data))
 }
 
 pub fn decode_hex_char(c: &char) -> Option<Vec<char>> {
@@ -146,12 +145,17 @@ pub fn decode_hex_char(c: &char) -> Option<Vec<char>> {
     }
 }
 
-pub fn decode_hex(s: &str) -> Option<Vec<char>> {
-    let mut cs: Vec<char> = vec![];
-    for ch in s.chars() {
-        cs.append(&mut decode_hex_char(&ch)?);
-    }
-    Some(cs)
+pub fn decode_hex(s: &str) -> Vec<char> {
+    s.chars()
+        .map(|c| decode_hex_char(&c).unwrap())
+        .flat_map(|cs| cs)
+        .collect()
+
+    // let mut cs: Vec<char> = vec![];
+    // for ch in s.chars() {
+    //     cs.append(&mut decode_hex_char(&ch)?);
+    // }
+    // Some(cs)
 }
 
 pub fn chars_to_u32(cs: &[char]) -> u32 {
@@ -168,8 +172,7 @@ mod tests {
         let s = "D2FE28";
         let bs = decode_hex(s);
         let bs_should_be: Vec<char> = "110100101111111000101000".chars().collect();
-        assert_eq!(Some(bs_should_be), bs);
-        let bs = bs.unwrap();
+        assert_eq!(bs_should_be, bs);
 
         let packet = Packet::new(bs);
         println!("{:?}", packet);
@@ -183,7 +186,7 @@ mod tests {
     #[test]
     fn test_parse2() {
         let s = "38006F45291200";
-        let bs = decode_hex(s).unwrap();
+        let bs = decode_hex(s);
 
         let packet = Packet::new(bs);
         let s = format!("{:?}", packet);
@@ -210,7 +213,7 @@ mod tests {
     #[test]
     fn test_parse3() {
         let s = "EE00D40C823060";
-        let bs = decode_hex(s).unwrap();
+        let bs = decode_hex(s);
 
         let packet = Packet::new(bs);
         let s = format!("{:?}", packet);
@@ -241,25 +244,25 @@ mod tests {
     #[test]
     fn test_parse4() {
         let s = "8A004A801A8002F478";
-        let bs = decode_hex(s).unwrap();
+        let bs = decode_hex(s);
         let packet = Packet::new(bs);
         let version_sum = packet.sum_versions();
         assert_eq!(16, version_sum);
 
         let s = "620080001611562C8802118E34";
-        let bs = decode_hex(s).unwrap();
+        let bs = decode_hex(s);
         let packet = Packet::new(bs);
         let version_sum = packet.sum_versions();
         assert_eq!(12, version_sum);
 
         let s = "C0015000016115A2E0802F182340";
-        let bs = decode_hex(s).unwrap();
+        let bs = decode_hex(s);
         let packet = Packet::new(bs);
         let version_sum = packet.sum_versions();
         assert_eq!(23, version_sum);
 
         let s = "A0016C880162017C3686B18A3D4780";
-        let bs = decode_hex(s).unwrap();
+        let bs = decode_hex(s);
         let packet = Packet::new(bs);
         let version_sum = packet.sum_versions();
         assert_eq!(31, version_sum);
